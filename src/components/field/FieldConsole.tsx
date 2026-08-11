@@ -499,8 +499,10 @@ export function FieldConsole() {
                       <p className="eyebrow">Growth pace</p>
                       <p className="mt-1 text-base font-semibold">{paceLabel}</p>
                       <p className="font-mono text-xs text-muted-foreground">
-                        {analysis.avgDailyGdd7.toFixed(1)} GDD/day · {Math.round(analysis.accumulatedGdd)} of{" "}
-                        {analysis.crop.gddTotal} total
+                        {analysis.avgDailyGdd7.toFixed(1)} GDD/day
+                        {analysis.gddBased
+                          ? ` · ${Math.round(analysis.accumulatedGdd)} of ${analysis.crop.gddTotal} total`
+                          : ""}
                       </p>
                     </div>
                     <div className="rounded-xl bg-secondary p-3.5">
