@@ -445,8 +445,11 @@ export function FieldConsole() {
               <p className="mt-1 font-mono text-sm text-muted-foreground">
                 {analysis.planning
                   ? `Planting in ${Math.abs(analysis.daysSincePlanting)} day${Math.abs(analysis.daysSincePlanting) === 1 ? "" : "s"} — ${formatDate(analysis.plantingDate)}`
-                  : `Day ${analysis.daysSincePlanting} since planting · ${Math.round(analysis.progress * 100)}% through the season`}
+                  : analysis.progress >= 1
+                    ? `Day ${analysis.daysSincePlanting} since planting · at or past harvest maturity`
+                    : `Day ${analysis.daysSincePlanting} since planting · ${Math.round(analysis.progress * 100)}% through the season`}
               </p>
+
             </div>
 
 
