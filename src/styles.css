@@ -78,7 +78,42 @@
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
   --shadow-card: 0 1px 2px oklch(0.25 0.04 150 / 0.05), 0 8px 24px -12px oklch(0.25 0.04 150 / 0.12);
   --shadow-panel: 0 2px 4px oklch(0.25 0.04 150 / 0.04), 0 24px 60px -30px oklch(0.25 0.04 150 / 0.22);
+  --shadow-float: 0 1px 1px oklch(0.2 0.04 150 / 0.06), 0 18px 40px -18px oklch(0.2 0.04 150 / 0.28);
+  --shadow-glow: 0 0 0 1px oklch(0.762 0.126 74 / 0.35), 0 12px 40px -12px oklch(0.762 0.126 74 / 0.45);
+  --animate-reveal: reveal 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-float-slow: float-slow 9s ease-in-out infinite;
+  --animate-sheen: sheen 2.6s linear infinite;
 }
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes float-slow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes sheen {
+  from {
+    background-position: -160% 0;
+  }
+  to {
+    background-position: 260% 0;
+  }
+}
+
 
 :root {
   --radius: 0.75rem;
