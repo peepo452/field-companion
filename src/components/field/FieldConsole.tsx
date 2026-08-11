@@ -453,11 +453,13 @@ export function FieldConsole() {
             <SeasonArc crop={analysis.crop} progress={analysis.planning ? null : analysis.progress} />
 
             {analysis.rec ? (
-              <div className={`rounded-2xl border p-4 ${toneStyles[analysis.rec.tone]}`}>
-                <p className="text-sm font-semibold">{analysis.rec.title}</p>
-                <p className="mt-1 text-sm opacity-90">{analysis.rec.text}</p>
-                {analysis.rec.subtext && <p className="mt-1.5 text-xs opacity-80">{analysis.rec.subtext}</p>}
+              <div className={`rounded-2xl border p-5 shadow-card ${toneStyles[analysis.rec.tone]}`}>
+                <p className="font-mono text-[10px] uppercase tracking-[0.18em] opacity-70">The call</p>
+                <p className="mt-2 font-display text-xl font-bold leading-snug">{analysis.rec.title}</p>
+                <p className="mt-2 text-sm leading-relaxed opacity-90">{analysis.rec.text}</p>
+                {analysis.rec.subtext && <p className="mt-2 text-xs opacity-80">{analysis.rec.subtext}</p>}
               </div>
+
             ) : (
               <div className="rounded-2xl border border-border bg-secondary p-4">
                 <p className="text-sm font-semibold">You haven't planted yet</p>
