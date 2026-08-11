@@ -7,6 +7,15 @@ type Props = {
   progress: number | null;
 };
 
+/** Arc labels need to stay distinct at ~8px, e.g. "Boll Development" vs "Boll Opening". */
+function shortLabel(name: string) {
+  const clean = name.replace(/ ?& ?/g, " ").replace(/[()]/g, "");
+  const words = clean.split(" ").filter(Boolean);
+  const first = words[0] ?? name;
+  if (first.length <= 5 && words[1]) return `${first} ${words[1]!.slice(0, 6)}`;
+  return first.length > 11 ? `${first.slice(0, 10)}.` : first;
+}
+
 function pointAt(t: number) {
   const p0 = { x: 22, y: 118 };
   const p1 = { x: 200, y: 2 };
@@ -50,7 +59,7 @@ export function SeasonArc({ crop, progress }: Props) {
                 fill="var(--color-muted-foreground)"
                 style={{ fontFamily: "var(--font-mono)" }}
               >
-                {w.name.split(" ")[0]}
+                {shortLabel(w.name)}
               </text>
             </g>
           );
