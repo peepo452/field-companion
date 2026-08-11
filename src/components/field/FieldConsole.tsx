@@ -242,7 +242,8 @@ export function FieldConsole() {
   return (
     <div className="grid gap-0 overflow-hidden rounded-3xl border border-border bg-card shadow-panel lg:grid-cols-[380px_1fr]">
       {/* ---------------- Left: inputs ---------------- */}
-      <div className="border-b border-border bg-forest-light/50 p-6 lg:border-b-0 lg:border-r">
+      <div className="relative border-b border-border bg-linear-to-b from-forest-light/70 to-card p-6 lg:border-b-0 lg:border-r">
+
         {session ? (
           <div className="mb-5 rounded-2xl border border-border bg-card p-4">
             <div className="flex items-center justify-between gap-3">
@@ -366,10 +367,11 @@ export function FieldConsole() {
         <button
           onClick={() => void run(cropKey, location, plantingDate)}
           disabled={loading}
-          className="mt-5 w-full rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+          className="mt-5 w-full rounded-xl bg-primary px-4 py-3.5 text-sm font-semibold text-primary-foreground shadow-float transition-all hover:-translate-y-0.5 hover:opacity-95 disabled:translate-y-0 disabled:opacity-60"
         >
-          {loading ? "Checking…" : "Check my field"}
+          {loading ? "Reading your field…" : "Check my field"}
         </button>
+
 
         {error && (
           <div className="mt-3 rounded-lg border border-danger-line bg-danger-bg px-3 py-2 text-xs text-danger-text">
@@ -399,20 +401,33 @@ export function FieldConsole() {
 
       {/* ---------------- Right: results ---------------- */}
       <div className="p-6 lg:p-8">
-        {!analysis ? (
-          <div className="flex h-full min-h-[380px] flex-col items-center justify-center rounded-2xl border border-dashed border-border p-8 text-center">
-            <span className="text-4xl">🌱</span>
-            <p className="mt-3 max-w-sm text-sm text-muted-foreground">
-              Your growth stage, soil-water balance, weather alerts and care notes appear here.
+        {loading ? (
+          <div className="space-y-5">
+            <div className="h-6 w-40 overflow-hidden rounded-full bg-secondary skeleton-sheen" />
+            <div className="h-32 overflow-hidden rounded-2xl bg-secondary skeleton-sheen" />
+            <div className="grid gap-3 sm:grid-cols-3">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="h-24 overflow-hidden rounded-2xl bg-secondary skeleton-sheen" />
+              ))}
+            </div>
+            <div className="h-40 overflow-hidden rounded-2xl bg-secondary skeleton-sheen" />
+          </div>
+        ) : !analysis ? (
+          <div className="relative flex h-full min-h-[420px] flex-col items-center justify-center overflow-hidden rounded-2xl border border-dashed border-border bg-linear-to-b from-secondary/40 to-transparent p-8 text-center">
+            <span className="animate-float-slow text-5xl">🌱</span>
+            <p className="mt-5 font-display text-lg font-semibold">Your field read appears here</p>
+            <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
+              Growth stage, soil-water balance, weather alerts and care notes — built from live weather for your exact
+              location.
             </p>
           </div>
         ) : (
-          <div className="space-y-7">
+          <div className="reveal-on-load space-y-8">
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <span
                   className={`rounded-full px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider ${
-                    analysis.planning ? "bg-surplus-bg text-surplus-text" : "bg-forest-light text-forest"
+                    analysis.planning ? "bg-surplus-bg text-surplus-text" : "bg-forest text-primary-foreground"
                   }`}
                 >
                   {analysis.planning ? "Planning mode" : "Live field status"}
@@ -426,22 +441,28 @@ export function FieldConsole() {
                   </span>
                 )}
               </div>
-              <h3 className="mt-3 text-2xl font-semibold">{analysis.place.name}</h3>
-              <p className="font-mono text-sm text-muted-foreground">
+              <h3 className="mt-3 font-display text-3xl font-bold leading-tight">{analysis.place.name}</h3>
+              <p className="mt-1 font-mono text-sm text-muted-foreground">
                 {analysis.planning
                   ? `Planting in ${Math.abs(analysis.daysSincePlanting)} day${Math.abs(analysis.daysSincePlanting) === 1 ? "" : "s"} — ${formatDate(analysis.plantingDate)}`
-                  : `Day ${analysis.daysSincePlanting} since planting · ${Math.round(analysis.progress * 100)}% through the season`}
+                  : analysis.progress >= 1
+                    ? `Day ${analysis.daysSincePlanting} since planting · at or past harvest maturity`
+                    : `Day ${analysis.daysSincePlanting} since planting · ${Math.round(analysis.progress * 100)}% through the season`}
               </p>
+
             </div>
+
 
             <SeasonArc crop={analysis.crop} progress={analysis.planning ? null : analysis.progress} />
 
             {analysis.rec ? (
-              <div className={`rounded-2xl border p-4 ${toneStyles[analysis.rec.tone]}`}>
-                <p className="text-sm font-semibold">{analysis.rec.title}</p>
-                <p className="mt-1 text-sm opacity-90">{analysis.rec.text}</p>
-                {analysis.rec.subtext && <p className="mt-1.5 text-xs opacity-80">{analysis.rec.subtext}</p>}
+              <div className={`rounded-2xl border p-5 shadow-card ${toneStyles[analysis.rec.tone]}`}>
+                <p className="font-mono text-[10px] uppercase tracking-[0.18em] opacity-70">The call</p>
+                <p className="mt-2 font-display text-xl font-bold leading-snug">{analysis.rec.title}</p>
+                <p className="mt-2 text-sm leading-relaxed opacity-90">{analysis.rec.text}</p>
+                {analysis.rec.subtext && <p className="mt-2 text-xs opacity-80">{analysis.rec.subtext}</p>}
               </div>
+
             ) : (
               <div className="rounded-2xl border border-border bg-secondary p-4">
                 <p className="text-sm font-semibold">You haven't planted yet</p>
@@ -486,7 +507,7 @@ export function FieldConsole() {
                 <section>
                   <p className="eyebrow">Growing conditions</p>
                   <div className="mt-2 grid gap-3 sm:grid-cols-3">
-                    <div className="rounded-xl bg-secondary p-3.5">
+                    <div className="rounded-2xl border border-border bg-linear-to-b from-secondary/70 to-card p-4 transition-shadow hover:shadow-card">
                       <p className="eyebrow">Sunlight (7-day)</p>
                       <p className="mt-1 text-base font-semibold">
                         {analysis.avgSolar >= 18 ? "High" : analysis.avgSolar >= 9 ? "Moderate" : "Low"}
@@ -495,7 +516,7 @@ export function FieldConsole() {
                         {analysis.avgSolar.toFixed(1)} MJ/m²/day
                       </p>
                     </div>
-                    <div className="rounded-xl bg-secondary p-3.5">
+                    <div className="rounded-2xl border border-border bg-linear-to-b from-secondary/70 to-card p-4 transition-shadow hover:shadow-card">
                       <p className="eyebrow">Growth pace</p>
                       <p className="mt-1 text-base font-semibold">{paceLabel}</p>
                       <p className="font-mono text-xs text-muted-foreground">
@@ -505,7 +526,7 @@ export function FieldConsole() {
                           : ""}
                       </p>
                     </div>
-                    <div className="rounded-xl bg-secondary p-3.5">
+                    <div className="rounded-2xl border border-border bg-linear-to-b from-secondary/70 to-card p-4 transition-shadow hover:shadow-card">
                       <p className="eyebrow">Projected harvest</p>
                       <p className="mt-1 text-base font-semibold">
                         {formatDate(analysis.plantingDate, analysis.projectedHarvestDay)}
@@ -521,22 +542,22 @@ export function FieldConsole() {
                   <section>
                     <p className="eyebrow">Soil water balance</p>
                     <div className="mt-2 grid gap-3 sm:grid-cols-3">
-                      <div className="rounded-xl bg-secondary p-3.5 text-center">
+                      <div className="rounded-2xl border border-border bg-linear-to-b from-secondary/70 to-card p-4 text-center transition-shadow hover:shadow-card">
                         <p className="font-mono text-xl font-semibold">{Math.round(analysis.wb.past7Rain)}mm</p>
                         <p className="eyebrow mt-0.5">Rain, 7 days</p>
                       </div>
-                      <div className="rounded-xl bg-secondary p-3.5 text-center">
+                      <div className="rounded-2xl border border-border bg-linear-to-b from-secondary/70 to-card p-4 text-center transition-shadow hover:shadow-card">
                         <p className="font-mono text-xl font-semibold">{Math.round(analysis.wb.past7Etc)}mm</p>
                         <p className="eyebrow mt-0.5">Crop use, 7 days</p>
                       </div>
-                      <div className="rounded-xl bg-secondary p-3.5 text-center">
+                      <div className="rounded-2xl border border-border bg-linear-to-b from-secondary/70 to-card p-4 text-center transition-shadow hover:shadow-card">
                         <p className="font-mono text-xl font-semibold">{Math.round(analysis.wb.depletionPct)}%</p>
                         <p className="eyebrow mt-0.5">Root zone depleted</p>
                       </div>
                     </div>
-                    <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-secondary">
+                    <div className="mt-4 h-3 w-full overflow-hidden rounded-full bg-secondary">
                       <div
-                        className="h-full rounded-full bg-forest-2"
+                        className="h-full rounded-full bg-linear-to-r from-forest-2 to-sun"
                         style={{ width: `${Math.min(100, Math.max(2, analysis.wb.depletionPct))}%` }}
                       />
                     </div>
