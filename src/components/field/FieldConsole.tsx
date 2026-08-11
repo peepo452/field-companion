@@ -504,7 +504,7 @@ export function FieldConsole() {
                 <section>
                   <p className="eyebrow">Growing conditions</p>
                   <div className="mt-2 grid gap-3 sm:grid-cols-3">
-                    <div className="rounded-xl bg-secondary p-3.5">
+                    <div className="rounded-2xl border border-border bg-linear-to-b from-secondary/70 to-card p-4 transition-shadow hover:shadow-card">
                       <p className="eyebrow">Sunlight (7-day)</p>
                       <p className="mt-1 text-base font-semibold">
                         {analysis.avgSolar >= 18 ? "High" : analysis.avgSolar >= 9 ? "Moderate" : "Low"}
@@ -513,7 +513,7 @@ export function FieldConsole() {
                         {analysis.avgSolar.toFixed(1)} MJ/m²/day
                       </p>
                     </div>
-                    <div className="rounded-xl bg-secondary p-3.5">
+                    <div className="rounded-2xl border border-border bg-linear-to-b from-secondary/70 to-card p-4 transition-shadow hover:shadow-card">
                       <p className="eyebrow">Growth pace</p>
                       <p className="mt-1 text-base font-semibold">{paceLabel}</p>
                       <p className="font-mono text-xs text-muted-foreground">
@@ -523,7 +523,7 @@ export function FieldConsole() {
                           : ""}
                       </p>
                     </div>
-                    <div className="rounded-xl bg-secondary p-3.5">
+                    <div className="rounded-2xl border border-border bg-linear-to-b from-secondary/70 to-card p-4 transition-shadow hover:shadow-card">
                       <p className="eyebrow">Projected harvest</p>
                       <p className="mt-1 text-base font-semibold">
                         {formatDate(analysis.plantingDate, analysis.projectedHarvestDay)}
@@ -539,22 +539,22 @@ export function FieldConsole() {
                   <section>
                     <p className="eyebrow">Soil water balance</p>
                     <div className="mt-2 grid gap-3 sm:grid-cols-3">
-                      <div className="rounded-xl bg-secondary p-3.5 text-center">
+                      <div className="rounded-2xl border border-border bg-linear-to-b from-secondary/70 to-card p-4 text-center transition-shadow hover:shadow-card">
                         <p className="font-mono text-xl font-semibold">{Math.round(analysis.wb.past7Rain)}mm</p>
                         <p className="eyebrow mt-0.5">Rain, 7 days</p>
                       </div>
-                      <div className="rounded-xl bg-secondary p-3.5 text-center">
+                      <div className="rounded-2xl border border-border bg-linear-to-b from-secondary/70 to-card p-4 text-center transition-shadow hover:shadow-card">
                         <p className="font-mono text-xl font-semibold">{Math.round(analysis.wb.past7Etc)}mm</p>
                         <p className="eyebrow mt-0.5">Crop use, 7 days</p>
                       </div>
-                      <div className="rounded-xl bg-secondary p-3.5 text-center">
+                      <div className="rounded-2xl border border-border bg-linear-to-b from-secondary/70 to-card p-4 text-center transition-shadow hover:shadow-card">
                         <p className="font-mono text-xl font-semibold">{Math.round(analysis.wb.depletionPct)}%</p>
                         <p className="eyebrow mt-0.5">Root zone depleted</p>
                       </div>
                     </div>
-                    <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-secondary">
+                    <div className="mt-4 h-3 w-full overflow-hidden rounded-full bg-secondary">
                       <div
-                        className="h-full rounded-full bg-forest-2"
+                        className="h-full rounded-full bg-linear-to-r from-forest-2 to-sun"
                         style={{ width: `${Math.min(100, Math.max(2, analysis.wb.depletionPct))}%` }}
                       />
                     </div>
