@@ -584,7 +584,10 @@ export function FieldConsole() {
               crop={analysis.crop}
               stageName={analysis.planning ? null : analysis.stage.name}
               spray={analysis.spray}
+              latitude={analysis.place.latitude}
+              longitude={analysis.place.longitude}
             />
+
 
             <section>
               <p className="eyebrow">Crop care notes</p>
