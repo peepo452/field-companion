@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   AREA_UNITS,
   computeDose,
@@ -10,6 +10,19 @@ import {
   type SprayWindow,
   type Threat,
 } from "@/lib/protection";
+import {
+  jurisdictionLabel,
+  knownCountries,
+  manualJurisdiction,
+  regimeFor,
+  resolveJurisdiction,
+  rulingFor,
+  STATUS_META,
+  subdivisionsWithRules,
+  type Jurisdiction,
+  type RegStatus,
+  type Ruling,
+} from "@/lib/regulatory";
 import type { Crop } from "@/lib/crops";
 
 const catStyle: Record<string, string> = {
@@ -19,6 +32,13 @@ const catStyle: Record<string, string> = {
   biological: "bg-forest-light text-forest-2 border-forest-2/30",
 };
 
+const statusStyle: Record<RegStatus, string> = {
+  approved: "bg-forest-light text-forest-2 border-forest-2/30",
+  restricted: "bg-surplus-bg text-surplus-text border-surplus-line",
+  banned: "bg-danger-bg text-danger-text border-danger-line",
+  unregistered: "bg-danger-bg text-danger-text border-danger-line",
+};
+
 const hazardLabel: Record<string, string> = {
   Ia: "WHO Ia · extremely hazardous",
   Ib: "WHO Ib · highly hazardous",
@@ -26,6 +46,7 @@ const hazardLabel: Record<string, string> = {
   III: "WHO III · slightly hazardous",
   U: "WHO U · unlikely to be hazardous",
 };
+
 
 function ProductRow({
   p,
