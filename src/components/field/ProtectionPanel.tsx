@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   AREA_UNITS,
   computeDose,
@@ -10,6 +10,19 @@ import {
   type SprayWindow,
   type Threat,
 } from "@/lib/protection";
+import {
+  jurisdictionLabel,
+  knownCountries,
+  manualJurisdiction,
+  regimeFor,
+  resolveJurisdiction,
+  rulingFor,
+  STATUS_META,
+  subdivisionsWithRules,
+  type Jurisdiction,
+  type RegStatus,
+  type Ruling,
+} from "@/lib/regulatory";
 import type { Crop } from "@/lib/crops";
 
 const catStyle: Record<string, string> = {
@@ -17,6 +30,13 @@ const catStyle: Record<string, string> = {
   fungicide: "bg-surplus-bg text-surplus-text border-surplus-line",
   herbicide: "bg-secondary text-foreground border-border",
   biological: "bg-forest-light text-forest-2 border-forest-2/30",
+};
+
+const statusStyle: Record<RegStatus, string> = {
+  approved: "bg-forest-light text-forest-2 border-forest-2/30",
+  restricted: "bg-surplus-bg text-surplus-text border-surplus-line",
+  banned: "bg-danger-bg text-danger-text border-danger-line",
+  unregistered: "bg-danger-bg text-danger-text border-danger-line",
 };
 
 const hazardLabel: Record<string, string> = {
@@ -27,17 +47,21 @@ const hazardLabel: Record<string, string> = {
   U: "WHO U · unlikely to be hazardous",
 };
 
+
 function ProductRow({
   p,
   hectares,
   waterLPerHa,
+  ruling,
 }: {
   p: Product;
   hectares: number;
   waterLPerHa: [number, number];
+  ruling: Ruling;
 }) {
   const [strength, setStrength] = useState(200);
   const dose = useMemo(() => computeDose(p, waterLPerHa, hectares, strength), [p, hectares, waterLPerHa, strength]);
+  const meta = STATUS_META[ruling.status];
 
   return (
     <div className="rounded-xl border border-border bg-card p-3.5">
@@ -48,10 +72,23 @@ function ProductRow({
             {p.moa} · {p.gAiPerHa[0]}–{p.gAiPerHa[1]} g a.i./ha
           </p>
         </div>
-        <span className={`shrink-0 rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider ${catStyle[p.category]}`}>
-          {p.category}
-        </span>
+        <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+          <span className={`rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider ${statusStyle[ruling.status]}`}>
+            {meta.label}
+          </span>
+          <span className={`rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider ${catStyle[p.category]}`}>
+            {p.category}
+          </span>
+        </div>
       </div>
+
+      {ruling.status === "restricted" && ruling.reason && (
+        <p className="mt-2 rounded-lg border border-surplus-line bg-surplus-bg px-2.5 py-2 text-xs leading-relaxed text-surplus-text">
+          <strong className="font-semibold">Condition where you farm: </strong>
+          {ruling.reason}
+        </p>
+      )}
+
 
       <div className="mt-3 grid gap-2 sm:grid-cols-3">
         <div className="rounded-lg bg-secondary/60 px-2.5 py-2">
@@ -111,13 +148,23 @@ function ThreatCard({
   active,
   hectares,
   waterLPerHa,
+  jur,
 }: {
   t: Threat;
   active: boolean;
   hectares: number;
   waterLPerHa: [number, number];
+  jur: Jurisdiction | null;
 }) {
   const [open, setOpen] = useState(active);
+  const [showBlocked, setShowBlocked] = useState(false);
+
+  const judged = useMemo(
+    () => t.products.map((p) => ({ p, ruling: rulingFor(p.ai, jur) })),
+    [t.products, jur],
+  );
+  const usable = judged.filter((x) => x.ruling.status === "approved" || x.ruling.status === "restricted");
+  const blocked = judged.filter((x) => x.ruling.status === "banned" || x.ruling.status === "unregistered");
 
   return (
     <div
@@ -135,6 +182,9 @@ function ThreatCard({
                 Active now
               </span>
             )}
+            <span className="rounded-full border border-border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+              {usable.length} legal option{usable.length === 1 ? "" : "s"} here
+            </span>
           </span>
           <span className="mt-1 block text-xs text-muted-foreground">Risk window: {t.stages.join(" · ")}</span>
         </span>
@@ -162,12 +212,48 @@ function ThreatCard({
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{t.cultural}</p>
           </div>
           <div>
-            <p className="eyebrow">4 · If the threshold is met — rotate between these</p>
-            <div className="mt-2 space-y-2">
-              {t.products.map((p) => (
-                <ProductRow key={p.ai} p={p} hectares={hectares} waterLPerHa={waterLPerHa} />
-              ))}
-            </div>
+            <p className="eyebrow">4 · If the threshold is met — rotate between what is legal here</p>
+            {usable.length === 0 ? (
+              <p className="mt-2 rounded-xl border border-danger-line bg-danger-bg px-3.5 py-2.5 text-sm leading-relaxed text-danger-text">
+                Nothing in the international library for this threat is registered where you farm. Use the cultural
+                control above and ask your local extension officer or registered dealer for an approved product.
+              </p>
+            ) : (
+              <div className="mt-2 space-y-2">
+                {usable.map(({ p, ruling }) => (
+                  <ProductRow key={p.ai} p={p} hectares={hectares} waterLPerHa={waterLPerHa} ruling={ruling} />
+                ))}
+              </div>
+            )}
+
+            {blocked.length > 0 && (
+              <div className="mt-3">
+                <button
+                  onClick={() => setShowBlocked((s) => !s)}
+                  className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground underline decoration-dotted"
+                >
+                  {showBlocked ? "Hide" : "Show"} {blocked.length} option{blocked.length === 1 ? "" : "s"} not
+                  available where you farm
+                </button>
+                {showBlocked && (
+                  <ul className="mt-2 space-y-1.5">
+                    {blocked.map(({ p, ruling }) => (
+                      <li
+                        key={p.ai}
+                        className="rounded-lg border border-danger-line bg-danger-bg px-2.5 py-2 text-xs leading-relaxed text-danger-text"
+                      >
+                        <span className="font-semibold line-through">{p.ai}</span>{" "}
+                        <span className="font-mono text-[10px] uppercase tracking-wider">
+                          · {STATUS_META[ruling.status].label}
+                        </span>
+                        {ruling.reason && <span className="block opacity-90">{ruling.reason}</span>}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+
             <p className="mt-2 text-xs text-muted-foreground">
               Never use the same group code twice in a row against the same pest generation — that is how resistance
               starts.
@@ -179,18 +265,51 @@ function ThreatCard({
   );
 }
 
+
 export function ProtectionPanel({
   crop,
   stageName,
   spray,
+  latitude,
+  longitude,
 }: {
   crop: Crop;
   stageName: string | null;
   spray: SprayWindow | null;
+  latitude?: number;
+  longitude?: number;
 }) {
   const prot = getProtection(crop.key);
   const [area, setArea] = useState(1);
   const [unitKey, setUnitKey] = useState("acre");
+
+  const [detected, setDetected] = useState<Jurisdiction | null>(null);
+  const [detecting, setDetecting] = useState(false);
+  const [overrideCountry, setOverrideCountry] = useState("");
+  const [overrideSub, setOverrideSub] = useState("");
+  const countries = useMemo(() => knownCountries(), []);
+
+  useEffect(() => {
+    if (latitude == null || longitude == null) return;
+    let cancelled = false;
+    setDetecting(true);
+    void resolveJurisdiction(latitude, longitude)
+      .then((j) => {
+        if (!cancelled) setDetected(j);
+      })
+      .finally(() => {
+        if (!cancelled) setDetecting(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [latitude, longitude]);
+
+  const jur: Jurisdiction | null = overrideCountry
+    ? manualJurisdiction(overrideCountry, overrideSub || undefined)
+    : detected;
+  const regime = regimeFor(jur);
+  const subOptions = jur ? subdivisionsWithRules(jur.country) : [];
 
   const unit = AREA_UNITS.find((u) => u.key === unitKey) ?? AREA_UNITS[1]!;
   const hectares = (area * unit.m2) / 10000;
@@ -206,6 +325,7 @@ export function ProtectionPanel({
       </section>
     );
   }
+
 
   const active = prot.threats.filter((t) => stageName && t.stages.includes(stageName));
   const later = prot.threats.filter((t) => !active.includes(t));
@@ -241,6 +361,76 @@ export function ProtectionPanel({
           <p className="mt-2 text-xs font-medium opacity-80">{spray.bestDayLabel}</p>
         </div>
       )}
+
+      {/* jurisdiction / legal availability */}
+      <div className="mt-4 rounded-2xl border border-border bg-linear-to-b from-secondary/60 to-card p-4">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="min-w-0">
+            <p className="eyebrow">Where you farm — legal filter</p>
+            <p className="mt-1 font-display text-lg font-bold leading-tight">
+              {jur ? jurisdictionLabel(jur) : detecting ? "Finding your regulatory area…" : "Area not detected"}
+            </p>
+          </div>
+          <span className="shrink-0 rounded-full border border-forest-2/30 bg-forest-light px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-forest-2">
+            {regime.id}
+          </span>
+        </div>
+
+        <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+          Products below are filtered against <strong className="font-semibold text-foreground">{regime.authority}</strong>.
+          {" "}{regime.summary} Anything banned or not registered in your area is taken out of the rotation.
+        </p>
+
+
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <select
+            value={overrideCountry || jur?.country || ""}
+            onChange={(e) => {
+              setOverrideCountry(e.target.value);
+              setOverrideSub("");
+            }}
+            className="rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-ring"
+          >
+            <option value="">Detect from field location</option>
+            {countries.map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+
+          {subOptions.length > 0 && (
+            <select
+              value={overrideSub || jur?.subCode || ""}
+              onChange={(e) => {
+                if (!overrideCountry) setOverrideCountry(jur?.country ?? "");
+                setOverrideSub(e.target.value);
+              }}
+              className="rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-ring"
+            >
+              <option value="">Whole country rules</option>
+              {subOptions.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+
+            </select>
+          )}
+
+          {overrideCountry && (
+            <button
+              onClick={() => {
+                setOverrideCountry("");
+                setOverrideSub("");
+              }}
+              className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground underline decoration-dotted"
+            >
+              Reset to detected
+            </button>
+          )}
+        </div>
+      </div>
 
       {/* land size */}
       <div className="mt-4 rounded-2xl border border-border bg-linear-to-b from-secondary/60 to-card p-4">
@@ -282,7 +472,7 @@ export function ProtectionPanel({
           </p>
           <div className="mt-2 space-y-3">
             {active.map((t) => (
-              <ThreatCard key={t.name} t={t} active hectares={hectares} waterLPerHa={prot.waterLPerHa} />
+              <ThreatCard key={t.name} t={t} active hectares={hectares} waterLPerHa={prot.waterLPerHa} jur={jur} />
             ))}
           </div>
         </div>
@@ -295,7 +485,7 @@ export function ProtectionPanel({
           </p>
           <div className="mt-2 space-y-3">
             {later.map((t) => (
-              <ThreatCard key={t.name} t={t} active={false} hectares={hectares} waterLPerHa={prot.waterLPerHa} />
+              <ThreatCard key={t.name} t={t} active={false} hectares={hectares} waterLPerHa={prot.waterLPerHa} jur={jur} />
             ))}
           </div>
         </div>
