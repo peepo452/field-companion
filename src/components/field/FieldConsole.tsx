@@ -17,6 +17,8 @@ import {
 import { fetchWeather, geocode, localISODate, type Place } from "@/lib/weather";
 import { SeasonArc } from "./SeasonArc";
 import { BalanceChart } from "./BalanceChart";
+import { ProtectionPanel } from "./ProtectionPanel";
+import { sprayWindow, type SprayWindow } from "@/lib/protection";
 
 type SavedField = {
   id: string;
@@ -44,6 +46,7 @@ type Analysis = {
   alerts: Alert[];
   rec: Recommendation | null;
   avgSolar: number;
+  spray: SprayWindow | null;
 };
 
 function daysBetween(fromISO: string, today: Date) {
@@ -168,6 +171,7 @@ export function FieldConsole() {
           alerts: [],
           rec: null,
           avgSolar: 0,
+          spray: null,
         });
         return;
       }
@@ -203,6 +207,7 @@ export function FieldConsole() {
         alerts,
         rec,
         avgSolar: n ? solar / n : 0,
+        spray: sprayWindow(weather.precip, weather.tmax, weather.tmin, weather.todayIdx),
       });
     } catch (e) {
       setAnalysis(null);
@@ -575,6 +580,12 @@ export function FieldConsole() {
               </>
             )}
 
+            <ProtectionPanel
+              crop={analysis.crop}
+              stageName={analysis.planning ? null : analysis.stage.name}
+              spray={analysis.spray}
+            />
+
             <section>
               <p className="eyebrow">Crop care notes</p>
               <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Common pests</p>
@@ -605,8 +616,8 @@ export function FieldConsole() {
                 ))}
               </ul>
               <p className="mt-3 text-xs text-muted-foreground">
-                General guidance only — no product or pesticide recommendations. For treatment decisions, consult your
-                local agricultural extension office or a licensed advisor.
+                General agronomic guidance. Pesticide options, thresholds and dose maths are in the crop protection
+                section above.
               </p>
             </section>
 
