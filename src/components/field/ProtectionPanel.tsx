@@ -52,13 +52,16 @@ function ProductRow({
   p,
   hectares,
   waterLPerHa,
+  ruling,
 }: {
   p: Product;
   hectares: number;
   waterLPerHa: [number, number];
+  ruling: Ruling;
 }) {
   const [strength, setStrength] = useState(200);
   const dose = useMemo(() => computeDose(p, waterLPerHa, hectares, strength), [p, hectares, waterLPerHa, strength]);
+  const meta = STATUS_META[ruling.status];
 
   return (
     <div className="rounded-xl border border-border bg-card p-3.5">
@@ -69,10 +72,23 @@ function ProductRow({
             {p.moa} · {p.gAiPerHa[0]}–{p.gAiPerHa[1]} g a.i./ha
           </p>
         </div>
-        <span className={`shrink-0 rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider ${catStyle[p.category]}`}>
-          {p.category}
-        </span>
+        <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+          <span className={`rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider ${statusStyle[ruling.status]}`}>
+            {meta.label}
+          </span>
+          <span className={`rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider ${catStyle[p.category]}`}>
+            {p.category}
+          </span>
+        </div>
       </div>
+
+      {ruling.status === "restricted" && ruling.reason && (
+        <p className="mt-2 rounded-lg border border-surplus-line bg-surplus-bg px-2.5 py-2 text-xs leading-relaxed text-surplus-text">
+          <strong className="font-semibold">Condition where you farm: </strong>
+          {ruling.reason}
+        </p>
+      )}
+
 
       <div className="mt-3 grid gap-2 sm:grid-cols-3">
         <div className="rounded-lg bg-secondary/60 px-2.5 py-2">
