@@ -270,14 +270,46 @@ export function ProtectionPanel({
   crop,
   stageName,
   spray,
+  latitude,
+  longitude,
 }: {
   crop: Crop;
   stageName: string | null;
   spray: SprayWindow | null;
+  latitude?: number;
+  longitude?: number;
 }) {
   const prot = getProtection(crop.key);
   const [area, setArea] = useState(1);
   const [unitKey, setUnitKey] = useState("acre");
+
+  const [detected, setDetected] = useState<Jurisdiction | null>(null);
+  const [detecting, setDetecting] = useState(false);
+  const [overrideCountry, setOverrideCountry] = useState("");
+  const [overrideSub, setOverrideSub] = useState("");
+  const countries = useMemo(() => knownCountries(), []);
+
+  useEffect(() => {
+    if (latitude == null || longitude == null) return;
+    let cancelled = false;
+    setDetecting(true);
+    void resolveJurisdiction(latitude, longitude)
+      .then((j) => {
+        if (!cancelled) setDetected(j);
+      })
+      .finally(() => {
+        if (!cancelled) setDetecting(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [latitude, longitude]);
+
+  const jur: Jurisdiction | null = overrideCountry
+    ? manualJurisdiction(overrideCountry, overrideSub || undefined)
+    : detected;
+  const regime = regimeFor(jur);
+  const subOptions = jur ? subdivisionsWithRules(jur.country) : [];
 
   const unit = AREA_UNITS.find((u) => u.key === unitKey) ?? AREA_UNITS[1]!;
   const hectares = (area * unit.m2) / 10000;
@@ -293,6 +325,7 @@ export function ProtectionPanel({
       </section>
     );
   }
+
 
   const active = prot.threats.filter((t) => stageName && t.stages.includes(stageName));
   const later = prot.threats.filter((t) => !active.includes(t));
