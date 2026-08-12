@@ -362,6 +362,77 @@ export function ProtectionPanel({
         </div>
       )}
 
+      {/* jurisdiction / legal availability */}
+      <div className="mt-4 rounded-2xl border border-border bg-linear-to-b from-secondary/60 to-card p-4">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="min-w-0">
+            <p className="eyebrow">Where you farm — legal filter</p>
+            <p className="mt-1 font-display text-lg font-bold leading-tight">
+              {detecting && !jur ? "Finding your regulatory area…" : jurisdictionLabel(jur)}
+            </p>
+          </div>
+          {regime && (
+            <span className="shrink-0 rounded-full border border-forest-2/30 bg-forest-light px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-forest-2">
+              {regime.label}
+            </span>
+          )}
+        </div>
+
+        <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+          {regime
+            ? `Products below are filtered against ${regime.authority}. Anything banned or not registered in your area is removed from the rotation.`
+            : "Set your country so the list only shows products that are legally available to you."}
+        </p>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <select
+            value={overrideCountry || jur?.country || ""}
+            onChange={(e) => {
+              setOverrideCountry(e.target.value);
+              setOverrideSub("");
+            }}
+            className="rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-ring"
+          >
+            <option value="">Detect from field location</option>
+            {countries.map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+
+          {subOptions.length > 0 && (
+            <select
+              value={overrideSub || jur?.subCode || ""}
+              onChange={(e) => {
+                if (!overrideCountry) setOverrideCountry(jur?.country ?? "");
+                setOverrideSub(e.target.value);
+              }}
+              className="rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-ring"
+            >
+              <option value="">Whole country rules</option>
+              {subOptions.map((s) => (
+                <option key={s.code} value={s.code}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          )}
+
+          {overrideCountry && (
+            <button
+              onClick={() => {
+                setOverrideCountry("");
+                setOverrideSub("");
+              }}
+              className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground underline decoration-dotted"
+            >
+              Reset to detected
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* land size */}
       <div className="mt-4 rounded-2xl border border-border bg-linear-to-b from-secondary/60 to-card p-4">
         <p className="eyebrow">Your land size</p>
