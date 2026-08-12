@@ -410,10 +410,11 @@ export function ProtectionPanel({
             >
               <option value="">Whole country rules</option>
               {subOptions.map((s) => (
-                <option key={s.code} value={s.code}>
-                  {s.name}
+                <option key={s} value={s}>
+                  {s}
                 </option>
               ))}
+
             </select>
           )}
 
