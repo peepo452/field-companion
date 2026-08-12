@@ -368,21 +368,19 @@ export function ProtectionPanel({
           <div className="min-w-0">
             <p className="eyebrow">Where you farm — legal filter</p>
             <p className="mt-1 font-display text-lg font-bold leading-tight">
-              {detecting && !jur ? "Finding your regulatory area…" : jurisdictionLabel(jur)}
+              {jur ? jurisdictionLabel(jur) : detecting ? "Finding your regulatory area…" : "Area not detected"}
             </p>
           </div>
-          {regime && (
-            <span className="shrink-0 rounded-full border border-forest-2/30 bg-forest-light px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-forest-2">
-              {regime.label}
-            </span>
-          )}
+          <span className="shrink-0 rounded-full border border-forest-2/30 bg-forest-light px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-forest-2">
+            {regime.id}
+          </span>
         </div>
 
         <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-          {regime
-            ? `Products below are filtered against ${regime.authority}. Anything banned or not registered in your area is removed from the rotation.`
-            : "Set your country so the list only shows products that are legally available to you."}
+          Products below are filtered against <strong className="font-semibold text-foreground">{regime.authority}</strong>.
+          {" "}{regime.summary} Anything banned or not registered in your area is taken out of the rotation.
         </p>
+
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <select
