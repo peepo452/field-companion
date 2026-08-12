@@ -148,13 +148,23 @@ function ThreatCard({
   active,
   hectares,
   waterLPerHa,
+  jur,
 }: {
   t: Threat;
   active: boolean;
   hectares: number;
   waterLPerHa: [number, number];
+  jur: Jurisdiction | null;
 }) {
   const [open, setOpen] = useState(active);
+  const [showBlocked, setShowBlocked] = useState(false);
+
+  const judged = useMemo(
+    () => t.products.map((p) => ({ p, ruling: rulingFor(p.ai, jur) })),
+    [t.products, jur],
+  );
+  const usable = judged.filter((x) => x.ruling.status === "approved" || x.ruling.status === "restricted");
+  const blocked = judged.filter((x) => x.ruling.status === "banned" || x.ruling.status === "unregistered");
 
   return (
     <div
@@ -172,6 +182,9 @@ function ThreatCard({
                 Active now
               </span>
             )}
+            <span className="rounded-full border border-border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+              {usable.length} legal option{usable.length === 1 ? "" : "s"} here
+            </span>
           </span>
           <span className="mt-1 block text-xs text-muted-foreground">Risk window: {t.stages.join(" · ")}</span>
         </span>
@@ -199,12 +212,48 @@ function ThreatCard({
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{t.cultural}</p>
           </div>
           <div>
-            <p className="eyebrow">4 · If the threshold is met — rotate between these</p>
-            <div className="mt-2 space-y-2">
-              {t.products.map((p) => (
-                <ProductRow key={p.ai} p={p} hectares={hectares} waterLPerHa={waterLPerHa} />
-              ))}
-            </div>
+            <p className="eyebrow">4 · If the threshold is met — rotate between what is legal here</p>
+            {usable.length === 0 ? (
+              <p className="mt-2 rounded-xl border border-danger-line bg-danger-bg px-3.5 py-2.5 text-sm leading-relaxed text-danger-text">
+                Nothing in the international library for this threat is registered where you farm. Use the cultural
+                control above and ask your local extension officer or registered dealer for an approved product.
+              </p>
+            ) : (
+              <div className="mt-2 space-y-2">
+                {usable.map(({ p, ruling }) => (
+                  <ProductRow key={p.ai} p={p} hectares={hectares} waterLPerHa={waterLPerHa} ruling={ruling} />
+                ))}
+              </div>
+            )}
+
+            {blocked.length > 0 && (
+              <div className="mt-3">
+                <button
+                  onClick={() => setShowBlocked((s) => !s)}
+                  className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground underline decoration-dotted"
+                >
+                  {showBlocked ? "Hide" : "Show"} {blocked.length} option{blocked.length === 1 ? "" : "s"} not
+                  available where you farm
+                </button>
+                {showBlocked && (
+                  <ul className="mt-2 space-y-1.5">
+                    {blocked.map(({ p, ruling }) => (
+                      <li
+                        key={p.ai}
+                        className="rounded-lg border border-danger-line bg-danger-bg px-2.5 py-2 text-xs leading-relaxed text-danger-text"
+                      >
+                        <span className="font-semibold line-through">{p.ai}</span>{" "}
+                        <span className="font-mono text-[10px] uppercase tracking-wider">
+                          · {STATUS_META[ruling.status].label}
+                        </span>
+                        {ruling.reason && <span className="block opacity-90">{ruling.reason}</span>}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+
             <p className="mt-2 text-xs text-muted-foreground">
               Never use the same group code twice in a row against the same pest generation — that is how resistance
               starts.
@@ -215,6 +264,7 @@ function ThreatCard({
     </div>
   );
 }
+
 
 export function ProtectionPanel({
   crop,
