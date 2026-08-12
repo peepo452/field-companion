@@ -415,7 +415,7 @@ export function ProtectionPanel({
           </p>
           <div className="mt-2 space-y-3">
             {later.map((t) => (
-              <ThreatCard key={t.name} t={t} active={false} hectares={hectares} waterLPerHa={prot.waterLPerHa} />
+              <ThreatCard key={t.name} t={t} active={false} hectares={hectares} waterLPerHa={prot.waterLPerHa} jur={jur} />
             ))}
           </div>
         </div>
