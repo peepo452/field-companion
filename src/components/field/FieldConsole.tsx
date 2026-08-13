@@ -18,6 +18,7 @@ import { fetchWeather, geocode, localISODate, type Place } from "@/lib/weather";
 import { SeasonArc } from "./SeasonArc";
 import { BalanceChart } from "./BalanceChart";
 import { ProtectionPanel } from "./ProtectionPanel";
+import { SatellitePanel } from "./SatellitePanel";
 import { sprayWindow, type SprayWindow } from "@/lib/protection";
 
 type SavedField = {
@@ -580,6 +581,12 @@ export function FieldConsole() {
               </>
             )}
 
+            <SatellitePanel
+              latitude={analysis.place.latitude}
+              longitude={analysis.place.longitude}
+              placeName={analysis.place.name}
+            />
+
             <ProtectionPanel
               crop={analysis.crop}
               stageName={analysis.planning ? null : analysis.stage.name}
@@ -587,6 +594,8 @@ export function FieldConsole() {
               latitude={analysis.place.latitude}
               longitude={analysis.place.longitude}
             />
+
+
 
 
             <section>
